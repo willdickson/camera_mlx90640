@@ -38,6 +38,5 @@ class FrameGrabber:
 if __name__ == '__main__':
 
    port = '/dev/ttyACM0'
-
    frame_grabber = FrameGrabber(port)
    frame_grabber.run()
