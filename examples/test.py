@@ -1,5 +1,6 @@
 import time
 import numpy as np
+import scipy.ndimage
 import matplotlib.pyplot as plt
 import matplotlib.animation as anim
 from camera_mlx90640 import CameraMLX90640
@@ -19,9 +20,17 @@ class FrameGrabber:
         rsp = self.cam.send_and_receive(cmd)
         t1 = time.time()
         print(f'dt: {t1 - t0}')
-        frame = np.array(rsp['frame'])
-        frame = np.reshape(frame, (self.FRAME_HEIGHT,self.FRAME_WIDTH))
-        self.pcm.set_array(frame)
+        try:
+            frame = np.array(rsp['frame'])
+        except KeyError:
+            pass
+        else:
+            frame = np.array(frame)
+            frame = np.reshape(frame, (self.FRAME_HEIGHT,self.FRAME_WIDTH))
+            frame = np.flipud(frame)
+            frame = np.fliplr(frame)
+            frame = scipy.ndimage.gaussian_filter(frame, sigma=1)
+            self.pcm.set_array(frame)
         return (self.pcm,)
 
     def run(self):
@@ -32,7 +41,6 @@ class FrameGrabber:
         self.cbar.set_label('deg (C) ')
         animation = anim.FuncAnimation(self.fig, self.update, interval=100) 
         plt.show()
-
 
 
 if __name__ == '__main__':

@@ -28,7 +28,7 @@ class CameraMLX90640(serial.Serial):
         """
         msg_json = f'{json.dumps(msg_dict)}\n'
         self.write(msg_json.encode())
-        rsp_json = self.readline()
+        rsp_json = self.read_until()
         rsp_json = rsp_json.strip()
         rsp_dict = {}
         try:
