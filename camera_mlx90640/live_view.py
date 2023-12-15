@@ -1,4 +1,5 @@
 import time
+import pathlib
 import numpy as np
 import scipy.ndimage
 import matplotlib.pyplot as plt
@@ -17,28 +18,49 @@ class LiveView:
             port = DEFAULT_PORT, 
             filename = DEFAULT_FILENAME, 
             temp_range = DEFAULT_TEMP_RANGE,
-            gaussian_filter = True
+            gaussian_filter = True,
+            add_count = False,
+            auto_record = None
             ):
         self.cam = CameraMLX90640(port)
-        self.filename = filename
+        self.filename = pathlib.Path(filename)
         self.gaussian_filter = gaussian_filter 
         self.temp_range = temp_range
         self.update_interval = self.UPDATE_INTERVAL 
+        self.add_count = add_count
+        self.auto_record = auto_record 
         self.recording = False
+        self.recording_count = 0
+        self.frame_count = 0
         self.frame_list = []
-        
+
+
+    def start_recording(self): 
+        self.frame_list = []
+        self.recording = True
+        self.recording_count += 1
+        print(f'recording {self.recording_count} start')
+
+
+    def stop_recording(self): 
+        self.recording = False
+        num_frames = len(self.frame_list)
+        frames = np.array(self.frame_list)
+        if self.add_count:
+            filename = f'{self.filename.stem}_{self.recording_count:03d}{self.filename.suffix}'
+            filepath = self.filename.parent / filename
+        else:
+            filepath = self.filename
+        np.save(filepath, frames)
+        print(f'recording {self.recording_count} stop,', end=' ')
+        print(f'#frames={num_frames}, file={filepath}')
+
     def on_key_press(self,event):
         if event.key == 'r':
             if self.recording == False:
-                self.frame_list = []
-                self.recording = True
-                print(f'recording start')
+                self.start_recording()
             else:
-                self.recording = False
-                num_frames = len(self.frame_list)
-                frames = np.array(self.frame_list)
-                np.save(self.filename, frames)
-                print(f'recording stop, #frames={num_frames}, file={self.filename}')
+                self.stop_recording()
 
     def update(self, cnt):
         cmd = {'cmd': 'frame'}
@@ -46,15 +68,21 @@ class LiveView:
         ok, frame = self.cam.grab_frame()
         t1 = time.time()
         if ok:
+            self.frame_count += 1
             if self.gaussian_filter: 
                 frame = scipy.ndimage.gaussian_filter(frame, sigma=1)
             self.pcm.set_array(frame)
-        if self.recording:
-            self.frame_list.append(frame)
-            num_frames = len(self.frame_list)
-            self.ax.set_title(f'frame # {cnt}, recording: {num_frames}')
+            if self.recording:
+                self.frame_list.append(frame)
+                num_frames = len(self.frame_list)
+                self.ax.set_title(f'frame # {self.frame_count}, recording: {num_frames}')
+                if self.auto_record > 0:
+                    if self.auto_record <= num_frames:
+                        self.stop_recording()
+                        self.auto_record = 0
         else:
             self.ax.set_title(f'frame # {cnt}')
+
         return (self.pcm,)
 
     def run(self):
@@ -71,9 +99,9 @@ class LiveView:
                 interval=self.update_interval, 
                 cache_frame_data=False
                 ) 
+        print('press r to toggle recording on/off')
+        print()
+        if self.auto_record > 0:
+            self.start_recording()
         plt.show()
 
-# ---------------------------------------------------------------------------------------
-#if __name__ == '__main__':
-#   live_view = LiveView()
-#   live_view.run()
