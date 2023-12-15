@@ -14,5 +14,13 @@ or
 pip install .
 ```
 
+## Command line interface
+
+![cli_screenshot](images/cli_screenshot.png)
+
+
+## Live view screenshot
+![live_view_screenshot](images/live_view_screenshot.png)
+
 
 
