@@ -1,10 +1,14 @@
 import json
 import serial
+import numpy as np
 
 class CameraMLX90640(serial.Serial):
     """
     Implements communications camera_mlx90640_firmware
     """
+
+    FRAME_HEIGHT = 24
+    FRAME_WIDTH = 32
 
     def __init__(self, port):
         self.port_param = {'port': port, 'baudrate': 115200, 'timeout': 2.0}
@@ -36,3 +40,23 @@ class CameraMLX90640(serial.Serial):
         except json.decoder.JSONDecodeError as e:
             print(f'Error decoding json message: {e}')
         return rsp_dict
+
+    def grab_frame(self):
+        """
+        Grab from from camera and convert it to a numpy array
+        """
+        cmd = {'cmd': 'frame'}
+        rsp = self.send_and_receive(cmd)
+        try:
+            frame = np.array(rsp['frame'])
+        except KeyError:
+            frame = np.zeros((self.FRAME_HEIGHT,self.FRAME_WIDTH))
+            ok = False
+        else:
+            frame = np.array(frame)
+            frame = np.reshape(frame, (self.FRAME_HEIGHT,self.FRAME_WIDTH))
+            frame = np.flipud(frame)
+            frame = np.fliplr(frame)
+            ok = True
+        return ok, frame
+

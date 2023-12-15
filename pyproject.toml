@@ -12,6 +12,10 @@ pyserial = "^3.5"
 numpy = "^1.25.0"
 matplotlib = "^3.7.1"
 scipy = "^1.11.2"
+click = "^8.1.7"
+
+[tool.poetry.scripts]
+mlx90640-live = 'camera_mlx90640.live_view_cli:cli'
 
 
 [build-system]
