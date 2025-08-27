@@ -35,15 +35,29 @@ else:
         default = 0, 
         help = 'auto record this many frames'
         ) 
-def cli(port, file, count, auto):
+@click.option(
+        '-t', '--trange', 
+        show_default = False, 
+        default = "20.0, 40.0", 
+        help = 'specify temperature range for display "min, max"'
+        ) 
+def cli(port, file, count, auto, trange):
+    temp_range = tuple(map(float, trange.split(',')))
     print()
     print(f'running live view')
     print(f'  usb/serial port:  {port}')
     print(f'  recording file:   {file}')
     print(f'  recording count:  {count}')
     print(f'  auto record:      {auto}')
+    print(f'  temp range:       {trange}')
     print()
-    live_view = LiveView(port=port, filename=file, add_count=count, auto_record=auto)
+    live_view = LiveView(
+            port=port, 
+            filename=file, 
+            temp_range=temp_range, 
+            add_count=count, 
+            auto_record=auto,
+            )
     live_view.run()
 
 
