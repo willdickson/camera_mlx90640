@@ -16,7 +16,7 @@ pip install .
 
 ## Command line interface
 
-![cli_screenshot](images/cli_screenshot.png)
+![cli_screenshot](images/cli_screenshot_2.png)
 
 
 ## Live view screenshot
